@@ -60,6 +60,7 @@ class Experiment:
     python_packages: Optional[Dict[str, str]] = None
     replicate_version: Optional[str] = None
     checkpoints: CheckpointList = field(default_factory=CheckpointList)
+    remote_running: bool = False
 
     def __post_init__(self, project: "Project"):
         self._project = project
@@ -150,6 +151,16 @@ class Experiment:
         self._project._daemon().save_experiment(self, quiet=quiet)
         return
 
+    def remote(self, instance: str, num_workers: int):
+        """Run this experiment as a remote job with anyscale.
+        """
+
+        if not self.remote_running:
+            self.remote_running = True
+            print(self._project._daemon().remote_experiment(experiment=self,
+                                                            instance="md.5",
+                                                            num_workers=2))
+
     def refresh(self):
         """
         Update this experiment with the latest data from the repository.
@@ -213,7 +224,8 @@ class Experiment:
         """
         if not self.checkpoints:
             return None
-        valid_metric = lambda m: m is not None and not math.isnan(m)
+
+        def valid_metric(m): return m is not None and not math.isnan(m)
         primary_metric_checkpoints = [
             chk
             for chk in self.checkpoints
@@ -222,10 +234,13 @@ class Experiment:
         ]
         if not primary_metric_checkpoints:
             return None
-        name = primary_metric_checkpoints[0].primary_metric["name"]  # type: ignore
-        goal = primary_metric_checkpoints[0].primary_metric["goal"]  # type: ignore
+        # type: ignore
+        name = primary_metric_checkpoints[0].primary_metric["name"]
+        # type: ignore
+        goal = primary_metric_checkpoints[0].primary_metric["goal"]
         if not all(
-            chk.primary_metric["name"] == name for chk in primary_metric_checkpoints  # type: ignore
+            # type: ignore
+            chk.primary_metric["name"] == name for chk in primary_metric_checkpoints
         ):
             console.warn(
                 "Not all checkpoints in experiment {} have the same primary metric name".format(
@@ -233,7 +248,8 @@ class Experiment:
                 )
             )
         if not all(
-            chk.primary_metric["goal"] == goal for chk in primary_metric_checkpoints  # type: ignore
+            # type: ignore
+            chk.primary_metric["goal"] == goal for chk in primary_metric_checkpoints
         ):
             console.warn(
                 "Not all checkpoints in experiment {} have the same primary metric goal".format(
@@ -242,9 +258,9 @@ class Experiment:
             )
 
         if goal == "minimize":
-            key = lambda chk: -chk.metrics[name]
+            def key(chk): return -chk.metrics[name]
         else:
-            key = lambda chk: chk.metrics[name]
+            def key(chk): return chk.metrics[name]
 
         return sorted(primary_metric_checkpoints, key=key)[-1]
 
@@ -289,7 +305,8 @@ class Experiment:
         # We should add status here, see https://github.com/replicate/replicate/issues/334
         for field in ["created", "host", "user", "command", "duration"]:
             out += '<pre style="display: inline">{:10s}</pre> {}<br/>'.format(
-                html.escape(field) + ":", html.escape(str(getattr(self, field)))
+                html.escape(field) +
+                ":", html.escape(str(getattr(self, field)))
             )
         out += "</p>"
         out += '<p><b><pre style="display: inline">params:</pre></b></p>'

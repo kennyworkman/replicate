@@ -45,6 +45,8 @@ func NewExperiment(params param.ValueMap) *Experiment {
 
 // Save experiment to repository
 func (e *Experiment) Save(repo repository.Repository) error {
+
+	// Rewriting the entire experiment object each time?
 	data, err := json.MarshalIndent(e, "", " ")
 	if err != nil {
 		return err

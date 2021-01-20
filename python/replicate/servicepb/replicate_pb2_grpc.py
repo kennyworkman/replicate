@@ -19,6 +19,11 @@ class DaemonStub(object):
                 request_serializer=replicate__pb2.CreateExperimentRequest.SerializeToString,
                 response_deserializer=replicate__pb2.CreateExperimentReply.FromString,
                 )
+        self.RemoteExperiment = channel.unary_unary(
+                '/service.Daemon/RemoteExperiment',
+                request_serializer=replicate__pb2.RemoteExperimentRequest.SerializeToString,
+                response_deserializer=replicate__pb2.RemoteExperimentReply.FromString,
+                )
         self.CreateCheckpoint = channel.unary_unary(
                 '/service.Daemon/CreateCheckpoint',
                 request_serializer=replicate__pb2.CreateCheckpointRequest.SerializeToString,
@@ -65,6 +70,12 @@ class DaemonServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def CreateExperiment(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RemoteExperiment(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -125,6 +136,11 @@ def add_DaemonServicer_to_server(servicer, server):
                     servicer.CreateExperiment,
                     request_deserializer=replicate__pb2.CreateExperimentRequest.FromString,
                     response_serializer=replicate__pb2.CreateExperimentReply.SerializeToString,
+            ),
+            'RemoteExperiment': grpc.unary_unary_rpc_method_handler(
+                    servicer.RemoteExperiment,
+                    request_deserializer=replicate__pb2.RemoteExperimentRequest.FromString,
+                    response_serializer=replicate__pb2.RemoteExperimentReply.SerializeToString,
             ),
             'CreateCheckpoint': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateCheckpoint,
@@ -190,6 +206,23 @@ class Daemon(object):
         return grpc.experimental.unary_unary(request, target, '/service.Daemon/CreateExperiment',
             replicate__pb2.CreateExperimentRequest.SerializeToString,
             replicate__pb2.CreateExperimentReply.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def RemoteExperiment(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/service.Daemon/RemoteExperiment',
+            replicate__pb2.RemoteExperimentRequest.SerializeToString,
+            replicate__pb2.RemoteExperimentReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

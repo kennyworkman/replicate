@@ -4,7 +4,6 @@ package servicepb
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -12,6 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // DaemonClient is the client API for Daemon service.
@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DaemonClient interface {
 	CreateExperiment(ctx context.Context, in *CreateExperimentRequest, opts ...grpc.CallOption) (*CreateExperimentReply, error)
+	RemoteExperiment(ctx context.Context, in *RemoteExperimentRequest, opts ...grpc.CallOption) (*RemoteExperimentReply, error)
 	CreateCheckpoint(ctx context.Context, in *CreateCheckpointRequest, opts ...grpc.CallOption) (*CreateCheckpointReply, error)
 	SaveExperiment(ctx context.Context, in *SaveExperimentRequest, opts ...grpc.CallOption) (*SaveExperimentReply, error)
 	StopExperiment(ctx context.Context, in *StopExperimentRequest, opts ...grpc.CallOption) (*StopExperimentReply, error)
@@ -40,6 +41,15 @@ func NewDaemonClient(cc grpc.ClientConnInterface) DaemonClient {
 func (c *daemonClient) CreateExperiment(ctx context.Context, in *CreateExperimentRequest, opts ...grpc.CallOption) (*CreateExperimentReply, error) {
 	out := new(CreateExperimentReply)
 	err := c.cc.Invoke(ctx, "/service.Daemon/CreateExperiment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *daemonClient) RemoteExperiment(ctx context.Context, in *RemoteExperimentRequest, opts ...grpc.CallOption) (*RemoteExperimentReply, error) {
+	out := new(RemoteExperimentReply)
+	err := c.cc.Invoke(ctx, "/service.Daemon/RemoteExperiment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +133,7 @@ func (c *daemonClient) GetExperimentStatus(ctx context.Context, in *GetExperimen
 // for forward compatibility
 type DaemonServer interface {
 	CreateExperiment(context.Context, *CreateExperimentRequest) (*CreateExperimentReply, error)
+	RemoteExperiment(context.Context, *RemoteExperimentRequest) (*RemoteExperimentReply, error)
 	CreateCheckpoint(context.Context, *CreateCheckpointRequest) (*CreateCheckpointReply, error)
 	SaveExperiment(context.Context, *SaveExperimentRequest) (*SaveExperimentReply, error)
 	StopExperiment(context.Context, *StopExperimentRequest) (*StopExperimentReply, error)
@@ -140,6 +151,9 @@ type UnimplementedDaemonServer struct {
 
 func (UnimplementedDaemonServer) CreateExperiment(context.Context, *CreateExperimentRequest) (*CreateExperimentReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateExperiment not implemented")
+}
+func (UnimplementedDaemonServer) RemoteExperiment(context.Context, *RemoteExperimentRequest) (*RemoteExperimentReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoteExperiment not implemented")
 }
 func (UnimplementedDaemonServer) CreateCheckpoint(context.Context, *CreateCheckpointRequest) (*CreateCheckpointReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCheckpoint not implemented")
@@ -175,7 +189,7 @@ type UnsafeDaemonServer interface {
 }
 
 func RegisterDaemonServer(s grpc.ServiceRegistrar, srv DaemonServer) {
-	s.RegisterService(&_Daemon_serviceDesc, srv)
+	s.RegisterService(&Daemon_ServiceDesc, srv)
 }
 
 func _Daemon_CreateExperiment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -192,6 +206,24 @@ func _Daemon_CreateExperiment_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DaemonServer).CreateExperiment(ctx, req.(*CreateExperimentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Daemon_RemoteExperiment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoteExperimentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DaemonServer).RemoteExperiment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.Daemon/RemoteExperiment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DaemonServer).RemoteExperiment(ctx, req.(*RemoteExperimentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -340,13 +372,20 @@ func _Daemon_GetExperimentStatus_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Daemon_serviceDesc = grpc.ServiceDesc{
+// Daemon_ServiceDesc is the grpc.ServiceDesc for Daemon service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Daemon_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "service.Daemon",
 	HandlerType: (*DaemonServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreateExperiment",
 			Handler:    _Daemon_CreateExperiment_Handler,
+		},
+		{
+			MethodName: "RemoteExperiment",
+			Handler:    _Daemon_RemoteExperiment_Handler,
 		},
 		{
 			MethodName: "CreateCheckpoint",

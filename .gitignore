@@ -11,6 +11,7 @@ python/replicate/bin
 /local
 .env*.local
 .idea
+.*.sw*
 
 # scratch notebooks
 Untitled.ipynb

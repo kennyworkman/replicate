@@ -10,6 +10,7 @@ import "google/protobuf/timestamp.proto";
 
 service Daemon {
     rpc CreateExperiment (CreateExperimentRequest) returns (CreateExperimentReply) {}
+    rpc RemoteExperiment (RemoteExperimentRequest) returns (RemoteExperimentReply) {}
     rpc CreateCheckpoint (CreateCheckpointRequest) returns (CreateCheckpointReply) {}
     rpc SaveExperiment (SaveExperimentRequest) returns (SaveExperimentReply) {}
     rpc StopExperiment (StopExperimentRequest) returns (StopExperimentReply) {}
@@ -28,6 +29,16 @@ message CreateExperimentRequest {
 
 message CreateExperimentReply {
     Experiment experiment = 1;
+}
+
+message RemoteExperimentRequest {
+    Experiment experiment = 1;
+    string instance = 2;
+    int64 numWorkers = 3;
+}
+
+message RemoteExperimentReply {
+    bool success = 1;
 }
 
 message CreateCheckpointRequest {

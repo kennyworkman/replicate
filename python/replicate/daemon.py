@@ -111,8 +111,10 @@ class Daemon:
         # need to wrap stdout and stderr for this to work in jupyter
         # notebooks. jupyter redefines sys.std{out,err} as custom
         # writers that eventually write the output to the notebook.
-        self.stdout_thread = start_wrapped_pipe(self.process.stdout, sys.stdout)
-        self.stderr_thread = start_wrapped_pipe(self.process.stderr, sys.stderr)
+        self.stdout_thread = start_wrapped_pipe(
+            self.process.stdout, sys.stdout)
+        self.stderr_thread = start_wrapped_pipe(
+            self.process.stderr, sys.stderr)
 
         atexit.register(self.cleanup)
         self.channel = grpc.insecure_channel("unix://" + self.socket_path)
@@ -163,6 +165,21 @@ class Daemon:
         return pb_convert.experiment_from_pb(self.project, ret.experiment)
 
     @handle_error
+    def remote_experiment(
+        self,
+        experiment: Experiment,
+        instance: str,
+        num_workers: int
+    ) -> Experiment:
+
+        pb_experiment = pb_convert.experiment_to_pb(experiment)
+        return self.stub.RemoteExperiment(
+            pb.RemoteExperimentRequest(experiment=pb_experiment,
+                                       instance=instance,
+                                       numWorkers=num_workers)
+        )
+
+    @handle_error
     def create_checkpoint(
         self,
         experiment: Experiment,
@@ -195,7 +212,8 @@ class Daemon:
 
     @handle_error
     def stop_experiment(self, experiment_id: str):
-        self.stub.StopExperiment(pb.StopExperimentRequest(experimentID=experiment_id))
+        self.stub.StopExperiment(
+            pb.StopExperimentRequest(experimentID=experiment_id))
 
     @handle_error
     def get_experiment(self, experiment_id_prefix: str) -> Experiment:
@@ -248,6 +266,7 @@ def start_wrapped_pipe(pipe, writer):
     if hasattr(writer, "buffer"):
         writer = writer.buffer
 
-    thread = threading.Thread(target=wrap_pipe, args=[pipe, writer], daemon=True)
+    thread = threading.Thread(target=wrap_pipe, args=[
+                              pipe, writer], daemon=True)
     thread.start()
     return thread

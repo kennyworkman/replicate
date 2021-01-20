@@ -4,6 +4,12 @@
 # pip install grpcio
 #
 # TODO: make the process of installing the proto tools and verifying installation automatic.
+#
+# KENNY:
+#
+# 	* go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+# 	* pip install mypy-protobuf
+# 	* pip install grpcio-tools
 
 GO_OUTPUT_DIR=../go/pkg/servicepb
 PYTHON_OUTPUT_DIR=../python/replicate/servicepb

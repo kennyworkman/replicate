@@ -58,6 +58,25 @@ func (s *server) CreateExperiment(ctx context.Context, req *servicepb.CreateExpe
 	return &servicepb.CreateExperimentReply{Experiment: pbRetExp}, nil
 }
 
+func (s *server) RemoteExperiment(ctx context.Context, req *servicepb.RemoteExperimentRequest) (*servicepb.RemoteExperimentReply, error) {
+
+	exp := experimentFromPb(req.GetExperiment())
+	args := project.RemoteExperimentArgs{
+		Instance:   req.Instance,
+		MaxWorkers: int(req.NumWorkers),
+	}
+	proj, err := s.getProject()
+	if err != nil {
+		return nil, handleError(err)
+	}
+	err = proj.RemoteExperiment(exp, args)
+	if err != nil {
+		return nil, handleError(err)
+	}
+
+	return &servicepb.RemoteExperimentReply{Success: true}, nil
+}
+
 func (s *server) CreateCheckpoint(ctx context.Context, req *servicepb.CreateCheckpointRequest) (*servicepb.CreateCheckpointReply, error) {
 	pbReqChk := req.GetCheckpoint()
 	args := project.CreateCheckpointArgs{

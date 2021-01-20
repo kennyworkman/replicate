@@ -280,6 +280,19 @@ func (p *Project) CreateExperiment(args CreateExperimentArgs, async bool, workCh
 	return exp, nil
 }
 
+type RemoteExperimentArgs struct {
+	Instance   string
+	MaxWorkers int
+}
+
+// Construct cluster, send code to cluster, somehow disable the second function call to remote, and tear down.
+func (p *Project) RemoteExperiment(exp *Experiment, args RemoteExperimentArgs) error {
+	//
+	fmt.Printf("\nout %+v", args)
+	// set some flag within experiment to remoteRunning = True
+	return nil
+}
+
 type CreateCheckpointArgs struct {
 	Path          string
 	Step          int64
@@ -299,38 +312,38 @@ func (p *Project) CreateCheckpoint(args CreateCheckpointArgs, async bool, workCh
 
 	// if path is empty (i.e. it was None in python), just return
 	// the checkpoint without saving anything
-	if chk.Path == "" {
-		if !quiet {
-			console.Info("Creating checkpoint %s...", chk.ShortID())
-		}
-		return chk, nil
-	}
+	// if chk.Path == "" {
+	// 	if !quiet {
+	// 		console.Info("Creating checkpoint %s...", chk.ShortID())
+	// 	}
+	// 	return chk, nil
+	// }
 
-	if !quiet {
-		console.Info("Creating checkpoint %s, copying '%s' to '%s' in the background...", chk.ShortID(), chk.Path, p.repository.RootURL())
-	}
+	// if !quiet {
+	// 	console.Info("Creating checkpoint %s, copying '%s' to '%s' in the background...", chk.ShortID(), chk.Path, p.repository.RootURL())
+	// }
 
-	tempDir, err := repository.CopyToTempDir(p.directory, chk.Path)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to copy files to temporary directory: %v", err)
-	}
+	// tempDir, err := repository.CopyToTempDir(p.directory, chk.Path)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("Failed to copy files to temporary directory(%v -> %v): %v", p.directory, chk.Path, err)
+	// }
 
-	work := func() error {
-		defer os.RemoveAll(tempDir)
-		start := time.Now()
-		if err := p.repository.PutPathTar(tempDir, chk.StorageTarPath(), chk.Path); err != nil {
-			return err
-		}
-		console.Debug("Copied files for checkpoint %s from '%s' to '%s/%s' (took %.3f seconds)", chk.ShortID(), chk.Path, p.repository.RootURL(), chk.StorageTarPath(), time.Since(start).Seconds())
-		return nil
-	}
-	if async {
-		workChan <- work
-	} else {
-		if err := work(); err != nil {
-			return nil, err
-		}
-	}
+	// work := func() error {
+	// 	defer os.RemoveAll(tempDir)
+	// 	start := time.Now()
+	// 	if err := p.repository.PutPathTar(tempDir, chk.StorageTarPath(), chk.Path); err != nil {
+	// 		return err
+	// 	}
+	// 	console.Debug("Copied files for checkpoint %s from '%s' to '%s/%s' (took %.3f seconds)", chk.ShortID(), chk.Path, p.repository.RootURL(), chk.StorageTarPath(), time.Since(start).Seconds())
+	// 	return nil
+	// }
+	// if async {
+	// 	workChan <- work
+	// } else {
+	// 	if err := work(); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	return chk, nil
 }
