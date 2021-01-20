@@ -312,7 +312,7 @@ func (p *Project) CreateCheckpoint(args CreateCheckpointArgs, async bool, workCh
 
 	tempDir, err := repository.CopyToTempDir(p.directory, chk.Path)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to copy files to temporary directory: %v", err)
+		return nil, fmt.Errorf("Failed to copy files to temporary directory(%v -> %v): %v", p.directory, chk.Path, err)
 	}
 
 	work := func() error {
