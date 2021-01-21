@@ -375,6 +375,8 @@ func isVirtualenvDir(path string) (bool, error) {
 }
 
 func CopyToTempDir(localPath string, includePath string) (tempDir string, err error) {
+	// TODO
+	localPath = "~"
 	// normalize path
 	includePath = filepath.Join(includePath)
 
