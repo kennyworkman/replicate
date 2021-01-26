@@ -7,6 +7,7 @@ except ImportError:
     from ._vendor import dataclasses  # type: ignore
 import getpass
 import os
+import inspect
 import math
 import html
 import datetime
@@ -157,9 +158,14 @@ class Experiment:
 
         if not self.remote_running:
             self.remote_running = True
-            print(self._project._daemon().remote_experiment(experiment=self,
-                                                            instance="md.5",
-                                                            num_workers=2))
+            # Retrieve script absolute path from call stack
+            script_path = os.path.abspath(inspect.stack()[1][1])
+            print("env: ", os.environ.get('LATCH_REMOTE'))
+            if not os.environ.get('LATCH_REMOTE'):
+                print(self._project._daemon().remote_experiment(experiment=self,
+                                                                script_path=script_path,
+                                                                instance=instance,
+                                                                num_workers=num_workers))
 
     def refresh(self):
         """
@@ -289,7 +295,7 @@ class Experiment:
         """
         return self.checkpoints.plot(metric, logy, plot_only)
 
-    @property
+    @ property
     def duration(self) -> Optional[datetime.timedelta]:
         if not self.checkpoints:
             return None
@@ -370,7 +376,7 @@ class Experiment:
         return out
 
 
-@dataclass
+@ dataclass
 class ExperimentCollection:
     """
     An object for managing experiments in a project.

@@ -62,6 +62,7 @@ func (s *server) RemoteExperiment(ctx context.Context, req *servicepb.RemoteExpe
 
 	exp := experimentFromPb(req.GetExperiment())
 	args := project.RemoteExperimentArgs{
+		ScriptPath: req.ScriptPath,
 		Instance:   req.Instance,
 		MaxWorkers: int(req.NumWorkers),
 	}

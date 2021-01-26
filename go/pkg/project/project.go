@@ -3,9 +3,13 @@ package project
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
+	"os/exec"
 	"os/user"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -281,16 +285,87 @@ func (p *Project) CreateExperiment(args CreateExperimentArgs, async bool, workCh
 }
 
 type RemoteExperimentArgs struct {
+	ScriptPath string
 	Instance   string
 	MaxWorkers int
 }
 
 // Construct cluster, send code to cluster, somehow disable the second function call to remote, and tear down.
 func (p *Project) RemoteExperiment(exp *Experiment, args RemoteExperimentArgs) error {
-	//
-	fmt.Printf("\nout %+v", args)
-	// set some flag within experiment to remoteRunning = True
+
+	// cluster config file name
+	filename := exp.ShortID() + ".yaml"
+
+	// exp.PythonVersion
+	depen := depenMapToYAML(exp.PythonPackages)
+	template := formatYAML(args.Instance, strconv.Itoa(args.MaxWorkers), depen)
+	scriptPath := args.ScriptPath
+
+	dir, file := filepath.Split(scriptPath)
+	rayConfig := filepath.Join(dir, filename)
+	remotePath := filepath.Join("/home/ray/", file)
+	fmt.Printf("%v", remotePath)
+
+	err := ioutil.WriteFile(rayConfig, []byte(template), 0644)
+	if err != nil {
+		return err
+	}
+
+	// 1. Construct cluster
+	cmd := exec.Command("ray", "up", rayConfig, "-y")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// 2. Send necessary files to cluster
+	cmd = exec.Command("ray", "rsync_up", filename, scriptPath, remotePath)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// 3. Execute remote script
+	remoteCommand := fmt.Sprintf("sudo env \"PATH=$PATH\" python %s", remotePath)
+	cmd = exec.Command("ray", "exec", filename, remoteCommand)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// 4. Tear down cluster
+	cmd = exec.Command("ray", "down", filename, "-y")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func formatYAML(instance, numWorkers, depen string) string {
+	fmt.Printf("\nWORKERS: %s", numWorkers)
+	template := strings.Replace(template, "$ARG_INSTANCE", instance, 1)
+	template = strings.Replace(template, "$ARG_MAX_WORKERS", numWorkers, 1)
+	template = strings.Replace(template, "$ARG_DEP_LIST", depen, 1)
+	return template
+
+}
+
+func depenMapToYAML(depen map[string]string) string {
+	list := ""
+	for k, v := range depen {
+		list += fmt.Sprintf("\n  - pip install %s==%s", k, v)
+	}
+	return strings.TrimPrefix(list, "\n")
 }
 
 type CreateCheckpointArgs struct {

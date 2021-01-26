@@ -33,8 +33,9 @@ message CreateExperimentReply {
 
 message RemoteExperimentRequest {
     Experiment experiment = 1;
-    string instance = 2;
-    int64 numWorkers = 3;
+    string scriptPath = 2;
+    string instance = 3;
+    int64 numWorkers = 4;
 }
 
 message RemoteExperimentReply {

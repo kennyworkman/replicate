@@ -168,6 +168,7 @@ class Daemon:
     def remote_experiment(
         self,
         experiment: Experiment,
+        script_path: str,
         instance: str,
         num_workers: int
     ) -> Experiment:
@@ -175,6 +176,7 @@ class Daemon:
         pb_experiment = pb_convert.experiment_to_pb(experiment)
         return self.stub.RemoteExperiment(
             pb.RemoteExperimentRequest(experiment=pb_experiment,
+                                       scriptPath=script_path,
                                        instance=instance,
                                        numWorkers=num_workers)
         )
